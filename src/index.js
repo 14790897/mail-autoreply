@@ -20,9 +20,37 @@ const INFO_TEXT = [
   "（<code> 会在本邮件中给出，24小时内有效）",
 ].join("\n");
 
-const WECHAT = " ";
+const WECHAT = "";
 const TTL_SECONDS = 24 * 60 * 60;
 const FORWARD_TO = "liuweiqing147@gmail.com";
+
+function normalizeEmailAddress(address) {
+  return (address || "").trim().toLowerCase();
+}
+
+function getReplyFromAddress(message, env) {
+  const explicit = (env?.REPLY_FROM || "").trim();
+  if (explicit) return explicit;
+
+  const toAddress = (message?.to || "").trim();
+  if (!toAddress) return "";
+
+  const mappingRaw = (env?.REPLY_FROM_BY_TO || "").trim();
+  if (mappingRaw) {
+    try {
+      const mapping = JSON.parse(mappingRaw);
+      const mapped = mapping?.[normalizeEmailAddress(toAddress)];
+      if (typeof mapped === "string" && mapped.trim()) return mapped.trim();
+    } catch (e) {
+      console.log("email:reply_from_map_error", {
+        message: e?.message || "",
+        text: String(e || ""),
+      });
+    }
+  }
+
+  return toAddress;
+}
 
 function genCode() {
   // 简单随机码；够用来做一次性确认
@@ -133,7 +161,9 @@ export default {
     const autoSubmitted = (message.headers.get("Auto-Submitted") || "").toLowerCase();
     const precedence = (message.headers.get("Precedence") || "").toLowerCase();
     if (autoSubmitted && autoSubmitted !== "no") return;
-    if (["bulk", "junk", "list"].includes(precedence)) return;
+    if (["bulk", "junk", "list"].includes(precedence)) {
+			console.log("email:dropped", { reason: "auto or bulk" });
+			return;}
 
     // 3) 转发一份到收件箱，避免路由显示 Dropped
     ctx.waitUntil(message.forward(FORWARD_TO));
@@ -144,6 +174,10 @@ export default {
     const sender = message.replyTo || message.from;
     console.log("email:sender", { sender: sender || "" });
     if (!sender) return;
+
+    const replyFrom = getReplyFromAddress(message, env);
+    console.log("email:reply_from", { replyFrom: replyFrom || "", to: message.to || "" });
+    if (!replyFrom) return;
 
     const bodyText = getBodyText(parsed);
     const choice = normalizeChoice(bodyText);
@@ -166,7 +200,7 @@ export default {
     if (saved?.stage === "PENDING" && codeInMail && codeInMail === saved.code && choice) {
       if (choice === "YES") {
         const replyMessage = buildReplyMessage({
-          from: "bilibili@sixiangjia.de",
+          from: replyFrom,
           to: sender,
           subject: "已确认：微信号",
           text: `好的，这是我的微信号：${WECHAT}\n\n（如需咨询/教学：100元/小时）`,
@@ -209,7 +243,7 @@ export default {
     const firstReplyText = INFO_TEXT.replaceAll("<code>", code);
 
     const firstReplyMessage = buildReplyMessage({
-      from: "bilibili@sixiangjia.de",
+      from: replyFrom,
       to: sender,
       subject: "自动回复：咨询/教学说明（请确认是否需要微信）",
       text: firstReplyText,
