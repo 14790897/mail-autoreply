@@ -16,12 +16,16 @@ Cloudflare Email Worker that:
    - `kv_namespaces`: `{ "binding": "CONSENT_KV", "id": "<YOUR_KV_ID>" }`
 
 2) Customize the reply content and forwarding target:
-   - Edit constants in `src/index.js`: `INFO_TEXT`, `FORWARD_TO`, `WECHAT`, `TTL_SECONDS`
+   - Configure via Wrangler env vars/secrets (read from `env`):
+     - `FORWARD_TO`: mailbox to receive forwarded copies (required; if empty, forwarding is skipped)
+     - `WECHAT`: WeChat ID sent after a valid `YES <code>` (recommended as a secret)
+     - `TTL_SECONDS`: consent code TTL in seconds (default: `86400`)
+     - `INFO_TEXT`: first auto-reply template (supports `<code>` placeholder; newlines can be `\n` or literal `\\n`)
    - Reply sender selection:
      - Default: uses the inbound recipient `message.to` as reply `from`
      - Optional: set `REPLY_FROM` to force a fixed sender
      - Optional: set `REPLY_FROM_BY_TO` (JSON string) to map recipient -> sender
-   - If you prefer env vars/secrets, add `vars`/`secrets` in Wrangler and read them from `env` in code
+   - Use `wrangler.jsonc` `vars` for non-sensitive values, and `npx wrangler secret put WECHAT` for sensitive values
 
 3) Add Email Routing rules in Cloudflare:
    - Custom addresses (for example):

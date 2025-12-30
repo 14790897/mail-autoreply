@@ -18,6 +18,25 @@
 	"observability": {
 		"enabled": true
 	},
+	"vars": {
+		// Required: where to forward inbound copies
+		"FORWARD_TO": "liuweiqing147@gmail.com",
+
+		// Optional: consent code TTL in seconds (default: 86400)
+		"TTL_SECONDS": "86400",
+
+		// Optional: first auto-reply template; include <code> placeholder; newlines can be \n or literal \\n
+		"INFO_TEXT": "你好，这是一封自动回复邮件。\\n\\n如需获取我的微信号，请直接回复本邮件：\\nYES <code>\\n如不需要，请回复：\\nNO <code>\\n\\n（<code> 会在本邮件中给出，24小时内有效）",
+
+		// Optional: force a fixed reply sender (otherwise uses message.to)
+		// "REPLY_FROM": "bilibili@your-domain.com",
+
+		// Optional: map inbound recipient -> reply sender (JSON string)
+		// "REPLY_FROM_BY_TO": "{\"bilibili@your-domain.com\":\"bilibili@your-domain.com\"}"
+
+		// suggest to set WECHAT in Secrets instead of here for better security (use `npx wrangler secret put WECHAT`)
+		// "WECHAT": "your_wechat_id"
+	},
 	"kv_namespaces": [
 		{ "binding": "CONSENT_KV", "id": "b254f4d2a05e4bb89bc7555f8e95870f" }
 	]

@@ -3,26 +3,39 @@ import { htmlToText } from "html-to-text";
 import { createMimeMessage } from "mimetext";
 import PostalMime from "postal-mime";
 
-// 你要自动回复的固定内容
-const INFO_TEXT = [
-  "感谢关注, 代码都在我的github上: https://github.com/14790897",
-  "个人博客: https://www.sixiangjia.de",
-  "个人简历: https://mygithub.14790897.xyz/14790897",
-  "联系邮箱: bilibili@sixiangjia.de",
-  "如果要咨询问题或者教学, 收费是一百一小时",
-  "",
-  "——",
-  "如需获取我的微信号，请直接回复本邮件：",
-  "YES <code>",
-  "如不需要，请回复：",
-  "NO <code>",
-  "",
-  "（<code> 会在本邮件中给出，24小时内有效）",
-].join("\n");
+const DEFAULT_TTL_SECONDS = 24 * 60 * 60;
 
-const WECHAT = "";
-const TTL_SECONDS = 24 * 60 * 60;
-const FORWARD_TO = "liuweiqing147@gmail.com";
+function parseTtlSeconds(value) {
+  const n = Number.parseInt(String(value ?? ""), 10);
+  return Number.isFinite(n) && n > 0 ? n : DEFAULT_TTL_SECONDS;
+}
+
+function getInfoText(env) {
+  const explicit = (env?.INFO_TEXT || "").trim();
+  if (explicit) {
+    // 允许在 vars/secrets 中用字面量 "\n" 表示换行（JSON 里常见写法）
+    return explicit.replaceAll("\\r\\n", "\n").replaceAll("\\n", "\n");
+  }
+
+  return [
+    "你好，这是一封自动回复邮件。",
+    "",
+    "如需获取我的微信号，请直接回复本邮件：",
+    "YES <code>",
+    "如不需要，请回复：",
+    "NO <code>",
+    "",
+    "（<code> 会在本邮件中给出，24小时内有效）",
+  ].join("\n");
+}
+
+function getWechatId(env) {
+  return (env?.WECHAT || "").trim();
+}
+
+function getForwardTo(env) {
+  return (env?.FORWARD_TO || "").trim();
+}
 
 function normalizeEmailAddress(address) {
   return (address || "").trim().toLowerCase();
@@ -166,8 +179,13 @@ export default {
 			return;}
 
     // 3) 转发一份到收件箱，避免路由显示 Dropped
-    ctx.waitUntil(message.forward(FORWARD_TO));
-    console.log("email:forwarded", { to: FORWARD_TO });
+    const forwardTo = getForwardTo(env);
+    if (forwardTo) {
+      ctx.waitUntil(message.forward(forwardTo));
+      console.log("email:forwarded", { to: forwardTo });
+    } else {
+      console.log("email:forward_skipped", { reason: "FORWARD_TO not set" });
+    }
 
     // 4) 只回给来信者（reply 目标必须是来信发件人，官方也强调了相关限制/规则）
     // 优先 replyTo，否则 from
@@ -203,7 +221,12 @@ export default {
           from: replyFrom,
           to: sender,
           subject: "已确认：微信号",
-          text: `好的，这是我的微信号：${WECHAT}\n\n（如需咨询/教学：100元/小时）`,
+          text: (() => {
+            const wechat = getWechatId(env);
+            return wechat
+              ? `好的，这是我的微信号：${wechat}\n\n（如需咨询/教学：100元/小时）`
+              : "好的，但我还没有配置微信号（WECHAT）。";
+          })(),
           inReplyTo,
         });
         try {
@@ -236,11 +259,12 @@ export default {
     if (saved?.stage === "PENDING") return;
 
     const code = genCode();
+    const ttlSeconds = parseTtlSeconds(env?.TTL_SECONDS);
     await env.CONSENT_KV.put(key, JSON.stringify({ stage: "PENDING", code }), {
-      expirationTtl: TTL_SECONDS,
+      expirationTtl: ttlSeconds,
     });
 
-    const firstReplyText = INFO_TEXT.replaceAll("<code>", code);
+    const firstReplyText = getInfoText(env).replaceAll("<code>", code);
 
     const firstReplyMessage = buildReplyMessage({
       from: replyFrom,

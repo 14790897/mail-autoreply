@@ -26,11 +26,11 @@ npx wrangler kv namespace create "CONSENT_KV"
 ```
 
 ### 2) 修改自动回复内容/转发邮箱/微信号
-当前版本把内容写在 `src/index.js` 的常量里（按需修改）：
-- `INFO_TEXT`：首次自动回复的正文模板（其中 `<code>` 会被替换为确认码）
-- `FORWARD_TO`：转发收件箱
-- `WECHAT`：确认后发送的微信号
-- `TTL_SECONDS`：确认码有效期（默认 24 小时）
+用 Wrangler 的环境变量/密钥来配置（代码会从 `env` 读取）：
+- `FORWARD_TO`：转发收件箱（必填，不填则跳过转发）
+- `WECHAT`：确认后发送的微信号（建议用 secret 存）
+- `TTL_SECONDS`：确认码有效期（秒，默认 `86400`）
+- `INFO_TEXT`：首次自动回复正文模板（可包含 `<code>` 占位符；换行可用 `\n` 或字面量 `\\n`）
 
 另外，回信发件人支持“按收件邮箱自动对应”：
 - 默认：自动用本次邮件的收件地址 `message.to` 作为回信 `from`
@@ -38,7 +38,9 @@ npx wrangler kv namespace create "CONSENT_KV"
 - 可选：设置 `REPLY_FROM_BY_TO`（JSON 字符串）按收件地址映射，例如：
   - `{"bilibili@sixiangjia.de":"bilibili@sixiangjia.de","linuxdo@sixiangjia.de":"linuxdo@sixiangjia.de"}`
 
-如果你希望用环境变量/密钥管理这些内容，建议通过 `wrangler.jsonc` 的 `vars` 或 `wrangler secret` 来做（并在代码里读取 `env`）。
+配置方式：
+- 在 `wrangler.jsonc` 的 `vars` 里设置：`FORWARD_TO`、`TTL_SECONDS`、`INFO_TEXT` 等
+- 用 secret 设置敏感信息（推荐）：`npx wrangler secret put WECHAT`
 
 ### 3) 配置 Email Routing 规则
 在 Cloudflare 控制台添加路由规则，例如：
