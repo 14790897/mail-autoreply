@@ -25,7 +25,7 @@ function getInfoText(env) {
     "如不需要，请回复：",
     "NO <code>",
     "",
-    "（<code> 会在本邮件中给出，24小时内有效）",
+    "（24小时内有效）",
   ].join("\n");
 }
 
