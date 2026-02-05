@@ -17,16 +17,7 @@ function getInfoText(env) {
     return explicit.replaceAll("\\r\\n", "\n").replaceAll("\\n", "\n");
   }
 
-  return [
-    "你好，这是一封自动回复邮件。",
-    "",
-    "如需获取我的微信号，请直接回复本邮件：",
-    "YES <code>",
-    "如不需要，请回复：",
-    "NO <code>",
-    "",
-    "（24小时内有效）",
-  ].join("\n");
+  return ['你好，这是一封自动回复邮件。', '', '如需获取我的微信号，请直接回复本邮件：', 'YES <code>', '', '（24小时内有效）'].join('\n');
 }
 
 function getWechatId(env) {
