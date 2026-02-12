@@ -26,7 +26,7 @@
 		"TTL_SECONDS": "86400",
 
 		// Optional: first auto-reply template; include <code> placeholder; newlines can be \n or literal \\n
-		"INFO_TEXT": "代码都在我的github上: https://github.com/14790897\\n个人博客: https://www.sixiangjia.de\\n个人简历: https://mygithub.14790897.xyz/14790897\\n联系邮箱: bilibili@sixiangjia.de\\n如果要咨询问题或者教学, 收费是一百一小时\\n\\n——\\n如需获取我的微信号，请直接回复本邮件：\\nYES <code>\\n如不需要，请回复：\\nNO <code>\\n\\n",
+		"INFO_TEXT": "代码都在我的github上: https://github.com/14790897\\n个人博客: https://www.sixiangjia.de\\n个人简历: https://mygithub.14790897.xyz/14790897\\n联系邮箱: bilibili@sixiangjia.de\\n如果要咨询问题或者教学, 收费是一百一小时\\n\\n——\\n如需获取我的微信号，请直接回复本邮件：\\nYES <code>\\n\\n",
 
 		// Optional: force a fixed reply sender (otherwise uses message.to)
 		// "REPLY_FROM": "bilibili@your-domain.com",
